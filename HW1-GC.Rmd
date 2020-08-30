@@ -1,0 +1,61 @@
+---
+title: "607-HW1"
+author: "George Cruz"
+date: "8/29/2020"
+output: html_document
+---
+# Where Police have killed Americans in 2015
+Police brutality against African Americans has been on the spotlight during 2020, stealing some attention from the Covid 19 pandemic and motivating protests and riots all across America. The death of George Floyd in police custody, acted as a catalyst to the protests. These were exacerbated by a somewhat callous response from the Federal government which moved to suppress the protests instead of trying to offer a solution to the crisis. 
+
+The main perception is that police is more likely to kill an African American suspect than any other ethnic group, especially whites. As part of the datasets available for HW1, I found this particular one which listed police killings in 2015 and wanted to examine the data to see if perception corresponds to reality.
+
+The data was taken from https://data.fivethirtyeight.com/ and copied to my personal github repo for easy examination. 
+
+### Getting the Data:
+
+```{r}
+library(tidyverse)
+
+theURL <- "https://raw.githubusercontent.com/georg4re/DS607/master/data/2015-Police%20Killings.csv"
+killings <- read.csv(file=theURL, fileEncoding="UTF-8-BOM")
+
+head(killings)
+# summary(killings)
+```
+### Manipulating the Data
+For the purposes of my study, address information, beyond the state, is not needed and neither is geolocation information or census data.  Initial examination will only look to race, gender, and if the individual was armed or not. 
+
+```{r}
+keeps <- c("name", "age", "gender", "raceethnicity", "state", "cause", "armed", "share_white", "share_black","share_hispanic")
+subKillings <- killings[, keeps, drop=FALSE]
+head(subKillings)
+```
+
+### Cleaning up some data
+The age and share_ethnicity columns are typed as characters when they should be numeric, some ages are "unknown" but I'd rather have them as NA.
+
+```{r}
+subKillings$age <- suppressWarnings(as.numeric(subKillings$age))
+subKillings$share_white <- suppressWarnings(as.numeric(subKillings$share_white))
+subKillings$share_black <- suppressWarnings(as.numeric(subKillings$share_black))
+subKillings$share_hispanic <- suppressWarnings(as.numeric(subKillings$share_hispanic))
+summary(subKillings)
+```
+### Making sense of it all
+It would be good to aggregate some data to see the percentages of each ethnicity and compare them to the overall mean of that ethnicity.
+
+```{r}
+allKillings <- count(subKillings)
+killingsByRace <- count(subKillings, raceethnicity)
+names(killingsByRace)[2] <- "killings"
+Temp<-merge(x=killingsByRace,y=allKillings,all.x= TRUE)
+names(Temp)[3] <- "allKillings"
+Temp$PctKillingsByRace<-round((Temp$killings/Temp$allKillings)*100,3)
+Temp
+```
+### Conclusions
+Based on this data, almost 29% of all police killings in 2015 were of african americans.  This, compared to a mean population share of 17% shows a disparity in police killings that disproportionally affected African Americans.  Whites were very close to their mean share in population and hispanics were significantly below their mean population share for the same period. 
+
+This study would benefit from data for other years, more comparisons and analysis of armed/unarmed, age, and other factors that might help better qualify the information being processed. 
+
+
