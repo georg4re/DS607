@@ -1,0 +1,66 @@
+---
+title: "DS607 - Homework 3"
+author: "George Cruz"
+date: "`r Sys.Date()`"
+output: openintro::lab_report
+---
+# Homework 3
+
+### 1. Using the 173 majors listed 
+In fivethirtyeight.com’s College Majors dataset [https://fivethirtyeight.com/features/the-economic-guide-to-picking-a-college-major/], provide code that identifies the majors that contain either "DATA" or "STATISTICS"
+```{r load-packages, message=FALSE}
+library(tidyverse)
+```
+
+
+```{r}
+theURL <- "https://raw.githubusercontent.com/fivethirtyeight/data/master/college-majors/majors-list.csv"
+all_majors <- read.csv(file=theURL, fileEncoding="UTF-8-BOM")
+data_or_stats <- subset(all_majors, grepl("DATA|STATISTICS", Major))
+data_or_stats
+```
+
+### 2. Write code that transforms the data below:
+
+```{r code-chunk-label}
+
+vector_1 <- c("bell pepper", "bilberry", "blackberry", "blood orange")
+vector_2 <- c("blueberry", "cantaloupe", "chili pepper", "cloudberry")
+vector_3 <- c("elderberry", "lime", "lychee", "mulberry")
+vector_4 <- c("olive", "salal berry")
+main_vector <- c(vector_1, vector_2, vector_3, vector_4)
+main_vector
+```
+
+### 3. Describe, in words, what these expressions will match:
+```{r, results='hide'}
+lista <- c("abba", "hello\2\1","aaaabbbcccdddde", "aabbmmmmmjmmkmkkk","banana", "amanaplanacanalpanama","civic", "racecar")
+str_view(lista, "(.)\\1\\1")
+str_view(lista, "(.)(.)\\2\\1")
+str_view(lista, "(..)\\1")
+str_view(lista, "(.).\\1.\\1")
+str_view(lista, "(.)(.)(.).*\\3\\2\\1")
+
+```
+
+1. "(.)\1\1"  Match any three repeated characters
+2. "(.)(.)\\2\\1 Match any symmetrical 4 characters where 1st and 4th characters are the same and 2,3 are the same.
+3. (..)\1 Match any repeated characters separated by 1 character.
+4. "(.).\\1.\\1" match any three repeated characters separated by the same character
+5. "(.)(.)(.).*\\3\\2\\1" match palyndromes of 6 of more letters
+
+### 4.Construct regular expressions to match words that:
+
+Start and end with the same character.
+Contain a repeated pair of letters (e.g. "church" contains "ch" repeated twice.)
+Contain one letter repeated in at least three places (e.g. "eleven" contains three "e"s.)
+
+```{r, results='hide'}
+words <- c("civic", "church", "eleven")
+str_view(words, "^(.).*\\1$")
+str_view(words, "(.)(.).*\\1\\2")
+str_view(words, "(.).\\1.\\1")
+
+```
+
+

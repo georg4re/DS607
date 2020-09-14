@@ -4,28 +4,118 @@ author: "George Cruz"
 date: "9/5/2020"
 output: html_document
 ---
+## Homework 2
 
-```{r setup, include=FALSE}
+### Initial Setup
+
+I selected 6 recent popular movies and configured a Google form to capture people responses.
+The form is available at: https://docs.google.com/forms/d/e/1FAIpQLSc7RBE8IycRWMCkxoVtQ86lcrRu2H-RJDahN24TMkPFOg4zdw/viewform
+
+I also setup a Google Sheet document which would receive the reponses. 
+
+The initial Idea was to write a Google App Script that would take the data from the Google Sheet and populate an AWS RDS Database.  To that effect, I setup a script following this tutorial: 
+
+https://www.linkedin.com/pulse/two-way-synchronization-between-google-spreadsheet-aws-deshpande/
+
+I also configured a free tier AWS RDS Database and whitelisted the ip addresses suggested in the tutorial. 
+
+Something did not work as I don't have write privileges into the RDS DB which prevented me from using my initial setup. 
+
+I had to revert to a backup configuration with a local MySQL Installation.
+
+I could not populate the local table using LOAD DATA INFILE because MySql was complaining that security settings prevented it from running. 
+
+So, I had to settled to
+1. Converting the Google Sheet Document into a csv file
+2. Uploading the csv file to github
+3. Populating the table by reading the csv into R and connecting to the local Db
+
+
+```{r}
 knitr::opts_chunk$set(echo = TRUE)
 
+library(tidyverse)
+
+theURL <- "https://raw.githubusercontent.com/georg4re/DS607/master/data/Movie%20Ratings%20(Responses).csv"
+ratings <- read.csv(file=theURL, fileEncoding="UTF-8-BOM")
+
+library(RMariaDB)
+
+# The connection method below uses a password stored in a settings file.
+
+# R needs a full path to find the settings file.
+rmariadb.settingsfile<-"C:\\Users\\georg\\Documents\\George\\Data Science MS\\DBConnection.cnf"
+
+rmariadb.db<-"d607-hw2"
+moviesDb<-dbConnect(RMariaDB::MariaDB(),default.file=rmariadb.settingsfile,group=rmariadb.db)
+
+#Clear previous data from the table
+query<-paste("TRUNCATE movie_ratings")
+rs = dbSendQuery(moviesDb,query)
+#Store the movies rating data in the sql table 
+dbWriteTable(moviesDb, value = ratings, row.names = FALSE, name = "movie_ratings", append = TRUE )
+
 ```
 
-## R Markdown
+## Getting the data from MySQL 
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+Once the data is populated into the DB, I read it by using a SQL Command:
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r movie_ratings}
+query<-paste("SELECT * from movie_ratings")
+rs = dbSendQuery(moviesDb, query)
+dbRows<-dbFetch(rs)
+dbRows
 ```
 
-## Including Plots
+## Data Analysis
 
-You can also embed plots, for example:
+I will take the average rating for each movie and look for records where no answers were provided:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+summary(dbRows)
+
 ```
+Based on the mean values, It would appear Avengers: Endgame was the preferred movie of my respondents. 
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+new_data <- dbRows %>% filter_all(any_vars(is.na(.)))
+new_data
+```
+### Suggesting movies for the people that have not watched them 
+ Based on the data, one person responded they only watched Endgame, and another person did not watch Star Wars, the Rise of Skywalker. 
+ One way to suggest a movie for the person who only watched endgame would be to find others that watched and enjoyed endgame as much as they did, and suggest the best movie for them based on the others ratings
+ 
+```{r}
+dbRows
+enjoyedEG <- dbRows[dbRows$endgame == 5,]
+enjoyedEG %>%
+  summarize(star_wars = mean(star_wars, na.rm = TRUE), 
+            ford_ferrari = mean(ford_ferrari, na.rm = TRUE),
+            little_women = mean(little_women, na.rm = TRUE), 
+            joker = mean(joker, na.rm = TRUE),
+            when_they = mean(when_they, na.rm = TRUE))
+```
+ Based on this findings, it would seem that the movie we should recommend to this person is Joker, as they would probably enjoy it. 
+ 
+### Would The person that did not watch Star Wars enjoy it?
+ In order to answer that question we would look for others that share the same ratings and assume they would like the same movies.
+ 
+```{r}
+tosuggest <- filter(dbRows, little_women == 5 )
+tosuggest %>%
+  summarize(star_wars = mean(star_wars, na.rm = TRUE))
+```
+ Based on these results, we can determine this viewer will probably not enjoy Star Wars too much. 
+ 
+### Conclusions
+ 
+ We can make recommendations by finding other viewers who rated the movies as high as another viewer and probably determine if the would like a certain movie. 
+ 
+ I would have loved to be able to get the whole initial workflow functioning and I will keep at it to make it work. 
+ 
+```{r}
+# Disconnect to clean up the connection to the database.
+dbDisconnect(moviesDb)
+```
+ 

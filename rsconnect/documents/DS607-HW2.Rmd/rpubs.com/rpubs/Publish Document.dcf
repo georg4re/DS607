@@ -1,0 +1,10 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/656767/f655399f9a6a46b687b0fa7df914a397
+bundleId: https://api.rpubs.com/api/v1/document/656767/f655399f9a6a46b687b0fa7df914a397
+url: http://rpubs.com/georg4re/656767
+when: 1599360016.74848
