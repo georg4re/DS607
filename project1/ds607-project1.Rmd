@@ -4,36 +4,207 @@ author: "George Cruz"
 date: "9/17/2020"
 output: html_document
 ---
+## Project Outline
+In this project, you’re given a text file with chess tournament results where the information has some structure. Your
+job is to create an R Markdown file that generates a .CSV file (that could for example be imported into a SQL database)
+with the following information for all of the players:
 
-```{r setup, include=FALSE}
+-Player’s Name 
+-Player’s State, 
+-Total Number of Points, 
+-Player’s Pre-Rating, 
+-Average Pre Chess Rating of Opponent
+
+### Setting up supporting functions
+To deal with the data's ETL process, I will create several r functions to avoid code repetition.  These functions will be listed here.
+```{r}
 knitr::opts_chunk$set(echo = TRUE)
-require(quanteda)
-require(readtext)
+library(tidyverse)
+```
 
+```{r echo=TRUE}
+#returns a list of rows in a data frame
+rows = function(tab) lapply(
+  seq_len(nrow(tab)),
+  function(i) unclass(tab[i,,drop=F])
+)
+
+# creates an empty data frame
+create_empty_table <- function(num_rows, num_cols, type_vec) {
+  frame <- data.frame(matrix(NA, nrow = num_rows, ncol = num_cols))
+  for(i in 1:ncol(frame)) {
+    print(type_vec[i])
+    if(type_vec[i] == 'numeric') {frame[,i] <- as.numeric(frame[,i])}
+    if(type_vec[i] == 'character') {frame[,i] <- as.character(frame[,i])}
+    if(type_vec[i] == 'logical') {frame[,i] <- as.logical(frame[,i])}
+    if(type_vec[i] == 'factor') {frame[,i] <- as.factor(frame[,i])}
+  }
+  return(frame)
+}
+
+# removes the pipe character and trims the strings
+clean_text <- function(text ) { 
+  text <- str_trim(gsub("\\|", "", text))
+  return(text)
+}
+
+#gets the rating of an opponent based on the result
+get_opp_rating <- function( df, result) { 
+  #extract player's ID from result 
+  opp_num <- as.numeric(str_extract_all(result, "\\d+"))
+  opp_rating <- df[opp_num,]$pre_rating
+  
+  return(opp_rating)
+}
+
+# gets the average opponent rating by looking at each 
+# opponent's ratings
+get_avg_opponent_rtg <- function( df, id) { 
+    opp_ratings <- c( get_opp_rating(df, df[id, ]$round1), 
+                      get_opp_rating(df, df[id, ]$round2),
+                      get_opp_rating(df, df[id, ]$round3),
+                      get_opp_rating(df, df[id, ]$round4),
+                      get_opp_rating(df, df[id, ]$round5),
+                      get_opp_rating(df, df[id, ]$round6),
+                      get_opp_rating(df, df[id, ]$round7))
+    return(mean(opp_ratings, na.rm = TRUE))
+}
+```
+
+## Extract the data
+The data lives in my github, and follows this format: 
+`-----------------------------------------------------------------------------------------`
+` Pair | Player Name                     |Total|Round|Round|Round|Round|Round|Round|Round| `
+` Num  | USCF ID / Rtg (Pre->Post)       | Pts |  1  |  2  |  3  |  4  |  5  |  6  |  7  | `
+`-----------------------------------------------------------------------------------------`
+`    1 | GARY HUA                        |6.0  |W  39|W  21|W  18|W  14|W   7|D  12|D   4|`
+`   ON | 15445895 / R: 1794   ->1817     |N:2  |W    |B    |W    |B    |W    |B    |W    |`
+`-----------------------------------------------------------------------------------------`
+
+### Getting the data
+We will first get the data into a dataframe called tournament.
+We will remove the lines with only dashes
+
+```{r}
+#getting the data from the file
 theURL <- "https://raw.githubusercontent.com/georg4re/DS607/master/project1/tournamentinfo.txt"
 
+#using read.fwf will help me with the fixed width nature of the document
 tournament <- read.fwf(theURL, width = c(7,34,6,6,6,6,6,6,6,6))
 
-tournament <- tournament %>% slice(-c(1,3))
+#removing the separating lines between player information
+nEnd <- nrow(tournament)
+if ((nEnd -1) %% 3 > 0 ) { 
+  nEnd = nEnd - ((nEnd -1) %% 3) + 1
+} 
+
+removeRows = seq(from=1, to= nEnd, by=3)
+tournament <- tournament %>% slice(-removeRows)
+
+# Remove the title values
+clean_tournament <- tournament %>% slice(-c(1,2))
+head(clean_tournament,10)
+```
+
+## Transform the data into a player related dataframe
+
+With the pieces in place, we can now transform the data into a player-centric dataframe.
+
+### Create the empty receiving table: player_data
+```{r}
+
+#set the column types
+types <- c("numeric","character","character","character","character","character","character","character","character","character", "character", "character")
+
+player_data <- create_empty_table(0, 12, types)
+```
+
+Let's iterate thru the original data to get our values into player_data
+```{r}
+line1 <- vector()
+line2 <- vector()
+
+for (i in 1 : nrow(clean_tournament)) {
+  # If it's the second line, add the player info to the table
+  if ((i %% 2) == 0) {
+    line2 <- clean_tournament[i, ]
+
+    player_data <- rbind(player_data, c(as.numeric(clean_text(line1$V1)), clean_text(line1$V2),
+                                        clean_text(line1$V3), clean_text(line1$V4),
+                                        clean_text(line1$V5), clean_text(line1$V6),
+                                        clean_text(line1$V7), clean_text(line1$V8),
+                                        clean_text(line1$V9), clean_text(line1$V10),
+                                        clean_text(line2$V1), clean_text(line2$V2)))
+  } 
+  else { 
+    line1 <- clean_tournament[i, ]
+  }
+}
+
+
+titles <- c("player_num","name","total_pts","round1","round2","round3","round4","round5","round6","round7", "state", "ID_Rtg")
+
+colnames(player_data) <- titles
+#Ensure player_num is numeric 
+player_data$player_num <- as.numeric(as.character(player_data$player_num))
+head(player_data,5)
+```
+
+We now have the data somewhat in place.  We can start cleaning it up by extracting the values we need.
+
+### Extract the ID, Pre Rating and Post Rating into their own columns 
+```{r}
+extracted_id_rtg <- data.frame( player_num= player_data$player_num,
+                                uscf_id = str_extract(player_data$ID_Rtg, "\\d+"),
+                                pre_rating = as.numeric(str_extract(player_data$ID_Rtg, 
+                                                                    "(?<=R: ).\\d+(?-)")),
+                                post_rating = as.numeric(
+                                  str_extract(
+                                    str_replace_all(player_data$ID_Rtg,"->","P:"),
+                                    "(?<=P:).\\d+")),
+                                stringsAsFactors=FALSE)
+
+player_data <- merge(x= player_data, y = extracted_id_rtg, by="player_num", all.x = TRUE)
+head(player_data,5)
+
+
+```
+### Calculate Opponents Pre rating
+Now, we will calculate the player's opponents' average pre-ratings and merge it to our 
+player data table
+```{r}
+
+avg_opp_rtg <- data.frame( player_num= "1",
+                       avgOppRating= as.numeric(get_avg_opponent_rtg(player_data,1)),
+                       stringsAsFactors=FALSE)
+
+for (i in 2:nrow(player_data)) { 
+  avg_opp_rtg <- rbind( avg_opp_rtg, c(as.character(i), 
+                        as.numeric(get_avg_opponent_rtg(player_data,i))
+                        ))  
+}
+player_data <- merge(x= player_data, y = avg_opp_rtg, by="player_num", all.x = TRUE)
+head(player_data,5)
 
 ```
 
-## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+### Producing the resulting data frame
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+final_df <- data.frame(Name= player_data$name, 
+                       State= player_data$state, 
+                       total_pts= player_data$total_pts, 
+                       pre_rating= player_data$pre_rating, 
+                       opp_rating= as.numeric(as.character(player_data$avgOppRating)))
+head(final_df,5)
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+### Produce Final CSV file
+```{r}
+write.csv(final_df, file = "ds607-gc-project1.csv")
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+9/19/2020
+
+
