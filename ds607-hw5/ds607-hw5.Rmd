@@ -84,13 +84,18 @@ flightsbycity2 <- flight_data %>%
   arrange(desc(onTimeAvg))
 flightsbycity2
 ```
-When we group the data by city, we can see that the city with the best on time average is Chicago.
+When we group the data by city, we can see that the city with the best on time average is Phoenix.
 Let's compare all cities in a graph.
 
 ```{r}
-ggplot(flightsbycity2, aes(x = city, y = onTimeAvg, fill=city)) + 
-  geom_bar(stat="identity", position = position_dodge2())
+ggplot(flightsbycity2, aes(x = reorder(city, -onTimeAvg), y = onTimeAvg, fill=city)) + 
+  geom_bar(stat="identity", position = position_dodge2()) + 
+  theme(axis.title.x = element_blank())
 ```
+
+### Conclusions
+
+Irrespective to Airline, Phoenix is the airport with the best average of on time flights and San Francisco has the worst average of the cities compared. Alaska does better than AMWEST in each of the cities compared.
 
 
 ...
