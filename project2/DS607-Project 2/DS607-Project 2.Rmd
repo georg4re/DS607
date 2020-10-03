@@ -1,24 +1,171 @@
 ---
-title: "Lab Name"
-author: "Author Name"
+title: "DS607 - Project2"
+author: "George Cruz"
 date: "`r Sys.Date()`"
 output: openintro::lab_report
 ---
 
 ```{r load-packages, message=FALSE}
-library(tidyverse)
-library(openintro)
+library(tidyr)
+library(dplyr)
 ```
 
-### Exercise 1
+### Introduction
+The goal of this assignment is to practice in preparing different datasets for downstream analysis work. 
 
-Insert any text here.
+We were tasked with choosing three wide datasets identified in the Week 5 Discussion items. 
 
-```{r code-chunk-label}
-# Insert code for Exercise 1 here
+The datasets I chose were: 
+
+1. **NYC Subway Ridership** by *Cameron Smith*
+
+
+
+### NYC Subway Ridership
+Cameron Identified a dataset located in the [MTA Web Site](http://web.mta.info/nyct/facts/ridership/ridership_sub_annual.htm) listing annual ridership at all stations from 2013-2018.
+
+He also suggested "An example of analysis that can be done is the change in ridership per station, or perhaps by borough, from one year to the next."
+
+**Getting the Data**
+I copied/pasted the data (minus the borough totals at the end) from that site to an excel spreadsheet and subsequently saved it to a csv located at my DS607 github repo. 
+
+```{r}
+subway_raw <- read.csv(file = 'https://raw.githubusercontent.com/georg4re/DS607/master/data/subway-ridership.csv')
+head(subway_raw)
+```
+```{r}
+summary(subway_raw)
 ```
 
-### Exercise 2
+As we can see, the dataset is "wide", it presents several other challenges like: 
+
+- column names are weird
+- borough information is presented isolated in a row prior to the stations for that borough
+- the ridership values are treated as strings not numeric variables.
+- for our analysis, we don't need the last three columns (2017-2018 change, pct or rank)
+
+**Cleaning the Data 1: Change column Names **
+```{r}
+#First column name is tough to rename so using basic R
+names(subway_raw)[1] = 'station'
+
+#using dplyr to rename other columns
+subway_data <- subway_raw %>% 
+  rename( '2013'= 'X2013',
+    '2014' = 'X2014', 
+    '2015' = 'X2015',
+    '2016' = 'X2016',
+    '2017' = 'X2017',
+    '2018' = 'X2018', 
+    '2017-2018 Change' = X2017.2018.Change, 
+    'Pct Change' = X, 
+    '2018 Rank' = X2018.Rank
+  )
+colnames(subway_data)
+
+```
+
+**Cleaning the Data 2: Assign the Borough name to each row **
+
+```{r}
+#Find the rows containing the Borough names
+#I noticed these are the only ones that have NA in the 2018 rank
+borough_names <- subway_data %>% 
+  dplyr::filter(is.na(subway_data$`2018 Rank`)) %>%
+  select(station)
+
+# Loop thru the subway_data and assign the proper borough to the data
+subway_data$borough <- ''
+idx <- 0 #begin with the first borough
+for (i in 1:nrow(subway_data)) {
+  if (is.na(subway_data$`2018 Rank`[i])) { #it's the boroug's row
+    idx <- idx + 1
+  } else { 
+    subway_data$borough[i] = borough_names$station[idx]
+  }
+}
+
+#I notice I could have avoided extracting the borough's name into 
+# a vector and just use the previous name within the for loop
+
+#I will now remove the rows with only borough names from the data
+subway_data <- subway_data %>%
+  drop_na(`2018 Rank`)
+  
+head(subway_data)
+```
+
+**Finish cleaning data: Changing the numeric column types + remove unneeded columns **
+```{r}
+subway_data <- subway_data %>%
+  mutate('2013' = as.numeric(gsub(',', '', subway_data$`2013`)),
+         '2014' = as.numeric(gsub(',', '', subway_data$`2014`)),
+         '2015' = as.numeric(gsub(',', '', subway_data$`2015`)),
+         '2016' = as.numeric(gsub(',', '', subway_data$`2016`)),
+         '2017' = as.numeric(gsub(',', '', subway_data$`2017`)),
+         '2018' = as.numeric(gsub(',', '', subway_data$`2018`))) %>%
+  select(borough, station, '2013', '2014', '2015', '2016', '2017', '2018')
+head(subway_data)
+```
+
+**Pivoting **
+Let's pivot from wide to long so as to have one single observation per row. 
+
+```{r}
+subway_clean <- subway_data %>%
+  pivot_longer(
+    3:8,
+    names_to="year",
+    values_to="riders",
+    values_drop_na = TRUE
+    )
+
+head(subway_clean)
+```
+
+**Let's Analyze this data **
+
+Now that we have a long, focused data set, we can go ahead and try to perform the requested analysis.  Because of the many stations, I will forgo analyzing a particular station's number of riders but this analysis can be performed using the subway_clean data set.
+
+#### Ridership per Borough per Year ###
+
+```{r}
+riders_per_borough <- subway_clean %>%
+  group_by(borough, year) %>%
+  summarize(avg_riders = mean(riders, na.rm = TRUE), .groups = "drop")
+
+riders_per_borough
+```
+```{r}
+library(ggplot2)
+library(scales)
+
+p <- ggplot(data = riders_per_borough, aes(x = year, y = avg_riders, group = borough, colour=borough)) + 
+     geom_line() +
+     geom_point() +
+     scale_x_discrete(breaks = riders_per_borough$year, labels = riders_per_borough$year)
+
+#Ensure a clean display 
+p + scale_y_continuous(labels = comma)
+
+```
+#### Conclusion 
+
+All boroughs show a decline on ridership within the last few years.  This is noticeable from 2016.  There was an increase in ridership in 2013 followed by slight increases until 2016.  Manhattan, The Bronx and Queens show a steeper decline than Brooklyn. Let's take a look at the overall ridership:
+
+```{r}
+all_riders <-  subway_clean %>%
+  group_by(year) %>%
+  summarize(avg_riders = mean(riders, na.rm = TRUE))
+
+p <- ggplot(data = all_riders) + 
+     geom_bar(mapping = aes(x = year, y = avg_riders, fill=year), stat='identity') + 
+     scale_y_continuous(labels = comma)
+
+p
+```
+This graph shows that the average number of riders has steadily declined in NY since 2016. 
+
 
 ...
 
