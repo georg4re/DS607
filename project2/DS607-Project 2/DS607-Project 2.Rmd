@@ -1,6 +1,6 @@
 ---
 title: "DS607 - Project2"
-author: "George Cruz"
+author: "Bharani Nittala, George Cruz Deschamps"
 date: "`r Sys.Date()`"
 output: openintro::lab_report
 ---
@@ -18,7 +18,7 @@ We were tasked with choosing three wide datasets identified in the Week 5 Discus
 The datasets I chose were: 
 
 1. **NYC Subway Ridership** by *Cameron Smith*
-
+2. **US Gross Domestic Product by Quarter (2020 mostly)**
 
 
 ### NYC Subway Ridership
@@ -33,9 +33,11 @@ I copied/pasted the data (minus the borough totals at the end) from that site to
 subway_raw <- read.csv(file = 'https://raw.githubusercontent.com/georg4re/DS607/master/data/subway-ridership.csv')
 head(subway_raw)
 ```
+
 ```{r}
 summary(subway_raw)
 ```
+
 
 As we can see, the dataset is "wide", it presents several other challenges like: 
 
@@ -64,6 +66,7 @@ subway_data <- subway_raw %>%
 colnames(subway_data)
 
 ```
+
 
 **Cleaning the Data 2: Assign the Borough name to each row **
 
@@ -95,6 +98,7 @@ subway_data <- subway_data %>%
 head(subway_data)
 ```
 
+
 **Finish cleaning data: Changing the numeric column types + remove unneeded columns **
 ```{r}
 subway_data <- subway_data %>%
@@ -107,6 +111,7 @@ subway_data <- subway_data %>%
   select(borough, station, '2013', '2014', '2015', '2016', '2017', '2018')
 head(subway_data)
 ```
+
 
 **Pivoting **
 Let's pivot from wide to long so as to have one single observation per row. 
@@ -123,6 +128,7 @@ subway_clean <- subway_data %>%
 head(subway_clean)
 ```
 
+
 **Let's Analyze this data **
 
 Now that we have a long, focused data set, we can go ahead and try to perform the requested analysis.  Because of the many stations, I will forgo analyzing a particular station's number of riders but this analysis can be performed using the subway_clean data set.
@@ -136,6 +142,7 @@ riders_per_borough <- subway_clean %>%
 
 riders_per_borough
 ```
+
 ```{r}
 library(ggplot2)
 library(scales)
@@ -149,6 +156,7 @@ p <- ggplot(data = riders_per_borough, aes(x = year, y = avg_riders, group = bor
 p + scale_y_continuous(labels = comma)
 
 ```
+
 #### Conclusion 
 
 All boroughs show a decline on ridership within the last few years.  This is noticeable from 2016.  There was an increase in ridership in 2013 followed by slight increases until 2016.  Manhattan, The Bronx and Queens show a steeper decline than Brooklyn. Let's take a look at the overall ridership:
@@ -164,8 +172,156 @@ p <- ggplot(data = all_riders) +
 
 p
 ```
+
 This graph shows that the average number of riders has steadily declined in NY since 2016. 
 
+### US Gross Domestic Product by Quarter (2020 mostly)
 
-...
+Arushi Arora Identified a dataset located in the [Fred Economic Data Website](https://fred.stlouisfed.org/series/GDP) listing annual US Gross Domestic product for 2019 and 2020 
 
+Arora suggested that "It might be helpful specially during the pandemic to identify sectors that are doing great and other that have been greatly impacted."
+
+
+**Getting the Data**
+I saved the data provided by Aroro as a tab delimited file located at my DS607 github repo. 
+
+```{r}
+gdp_raw <- read.table(file= 'https://raw.githubusercontent.com/georg4re/DS607/master/data/2019-2020-gdp.txt',
+                      sep="\t", header=TRUE)
+head(gdp_raw)
+```
+```{r}
+summary(gdp_raw)
+
+```
+
+As we can see, the dataset is "wide", it also treats the values as characters and not as numeric values.  Several sub section data also have the same names, we will drop all repeated subsections with the same name for a smaller dataset without losing important data.
+
+####Cleaning data: Changing the numeric column types
+
+```{r}
+gdp_data <- gdp_raw %>%
+  mutate('Q2.2020' = as.numeric(gsub(',', '', gdp_raw$`Q2.2020`)) * 1000,
+         'Q1.2020' = as.numeric(gsub(',', '', gdp_raw$`Q1.2020`)) * 1000,
+         'Q2.2019' = as.numeric(gsub(',', '', gdp_raw$`Q2.2019`)) * 1000) %>%
+  rename( '2020.2'= 'Q2.2020',
+    '2020.1' = 'Q1.2020', 
+    '2019.2' = 'Q2.2019') %>%
+  distinct(Name, .keep_all = TRUE)
+
+#I multiplied by 1000 to get rid of the decimal point in the notation 
+head(gdp_data)
+```
+
+**Pivoting **
+Let's pivot from wide to long so as to have one single observation per row. 
+
+```{r}
+gdp_clean <- gdp_data %>%
+  pivot_longer(
+    3:5,
+    names_to="Quarter",
+    values_to="Gdp",
+    values_drop_na = TRUE
+    ) %>%
+  select(Name, Quarter, Gdp)%>%
+  arrange(Name, Quarter, by_group = TRUE)
+
+head(gdp_clean)
+```
+
+
+#### Analyzing Data **
+
+Now that we have a long, focused data set, we can go ahead and try to perform the requested analysis.  We can pay special attention to the second quarter of 2020 to see the areas more greatly affected by the pandemic
+
+#### GDP Per Quarter ###
+
+```{r}
+
+all_gdp <- gdp_clean %>%
+  group_by(Quarter) %>%
+  summarise(avg_gdp = mean(Gdp), median_gdp = median(Gdp))
+
+all_gdp
+
+```
+
+Based on the overall mean gdp we can see that, as we could probably presume, the average GDP figure fell significantly during the 2nd quarter of 2020.
+
+We'll add a percent change column to our clean data to identify gains/losses by quarter
+```{r}
+gdp_by_pct_change <-mutate(gdp_clean, Row = 1:n()) %>%
+  group_by(Name) %>%
+  mutate(pct_change = Gdp/lag(Gdp) * 100) %>%
+  ungroup %>%
+  select(Name, Quarter, pct_change) %>%
+  arrange(pct_change)
+head(gdp_by_pct_change)
+```
+
+By looking at this data, we can see that Exports and Imports suffered the most during the Second Quarter as they decreased the most among the categories we have. 
+
+```{r}
+
+p <- ggplot(data = gdp_clean, aes(x = Quarter, y = Gdp, group=Name, color=Name )) +  
+     geom_line() +
+     geom_point() +
+     scale_y_continuous(labels = comma)
+p <- p + theme(legend.position="bottom")
+p <- p + guides(fill=guide_legend(nrow=5, byrow=TRUE))
+
+p
+```
+
+
+We see a general decline in values, let's take a look at this same graph by percent change:
+```{r}
+#Assign 100 to all NA assuming we start at 100% on 2019.2
+gdp_by_pct_change[is.na(gdp_by_pct_change)] <- 100
+p <- ggplot(data = gdp_by_pct_change, aes(x = Quarter, y = pct_change, group=Name, color=Name )) +  
+     geom_line() +
+     geom_point() +
+     scale_y_continuous(labels = comma)
+p <- p + theme(legend.position="bottom")
+p <- p + guides(fill=guide_legend(nrow=10, byrow=TRUE))
+
+p
+
+```
+
+Let's take a look at the bigger changes in the 2nd Quarter: 
+```{r}
+gdp_by_pct_change %>% 
+    filter(Quarter=="2020.2") %>%
+    arrange(desc(pct_change)) %>%
+    slice(1:5) %>%
+  ggplot(data = .) + 
+     geom_bar(mapping = aes(x = Name, y = pct_change, fill=Name), stat='identity') +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank()
+        )
+```
+
+Based on this, the biggest gain was in Change in private inventories with a near 600% increase.  This is also the same variable decreased almost 100% between 2019 and the 1st quarter in 2020
+
+**Most affected**
+
+```{r}
+gdp_by_pct_change %>% 
+    filter(Quarter == '2020.2') %>%
+    arrange(pct_change) %>%
+    slice(1:5) %>%
+  ggplot(data = .) + 
+     geom_bar(mapping = aes(x = Name, y = pct_change, fill=Name), stat='identity') +
+    theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank()
+        )
+```
+
+
+Again, this graph shows that exports, imports and Gross private domestic investments were the most affected sectors in the 2nd Quarter. 
+
+#### Conclusion 
+
+Although there is a general decline in values, some sectors like Private inventories and Defense reported gains in their GDP during the 2nd quarter of 2020.
