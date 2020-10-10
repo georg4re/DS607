@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<books>
+    <book>
+        <title>The Fellowship of the Ring</title>
+        <author>J.R.R. Tolkien</author>
+        <country>United Kingdom</country>
+        <genre>Fantasy, Adventure</genre>
+        <publisher>Allen &amp; Unwin</publisher>
+        <publication_date>07/29/1954</publication_date>
+    </book>
+    <book>
+        <title>The Hitchhiker's Guide to the Galaxy</title>
+        <author>Douglas Adams</author>
+        <country>United Kingdom</country>
+        <genre>Comic Science Fiction</genre>
+        <publisher>Pan Books</publisher>
+        <publication_date>10/12/1979</publication_date>
+    </book>
+    <book>
+        <title>Watchmen</title>
+        <author>Allan Moore, Dave Gibbons</author>
+        <country>USA</country>
+        <genre>Comic Book, Science Fiction</genre>
+        <publisher>DC Comics</publisher>
+        <publication_date>09/01/1986</publication_date>
+    </book>
+</books>

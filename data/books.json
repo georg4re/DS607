@@ -1,0 +1,26 @@
+[
+    {
+       "title": "The Fellowship of the Ring",
+       "author": "J.R.R. Tolkien",
+       "country": "United Kingdom",
+       "genre": "Fantasy, Adventure",
+       "publisher": "Allen & Unwin",
+       "publication_date": "07/29/1954"
+    },
+    {
+       "title": "The Hitchhiker's Guide to the Galaxy",
+       "author": "Douglas Adams",
+       "country": "United Kingdom",
+       "genre": "Comic Science Fiction",
+       "publisher": "Pan Books",
+       "publication_date": "10/12/1979"
+    },
+    {
+       "title": "Watchmen",
+       "author": "Allan Moore, Dave Gibbons",
+       "country": "USA",
+       "genre": "Comic Book, Science Fiction",
+       "publisher": "DC Comics",
+       "publication_date": "09/01/1986"
+    }
+ ]
