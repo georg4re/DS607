@@ -19,7 +19,51 @@ separate R data frames. Are the three data frames identical?
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(XML)
+library(httr)
+library(rjson)
+library(RCurl)
+library(arsenal)  #for comparison purposes
+```
+
+### HTML Data
+```{r}
+html_source<-readHTMLTable(getURL("https://raw.githubusercontent.com/georg4re/DS607/master/data/books.html"))
+html_source<-lapply(html_source[[1]], function(x) {unlist(x)})
+html_data<-as.data.frame(html_source)
+head(html_data)
+```
+
+### XML Data
+```{r}
+xml_source<-xmlInternalTreeParse(getURL("https://raw.githubusercontent.com/georg4re/DS607/master/data/books.xml"))
+xml_source<-xmlSApply(xmlRoot(xml_source), function(x) xmlSApply(x, xmlValue))
+#Need to flip the rows and columns
+xml_source <- t(xml_source)
+xml_data<-data.frame(xml_source, row.names = NULL)
+head(xml_data)
+```
+
+### JSON Data
+```{r}
+json_source <- fromJSON(file = "https://raw.githubusercontent.com/georg4re/DS607/master/data/books.json")
+json_source <- lapply(json_source, function(x) {
+  unlist(x)
+})
+json_data <- as.data.frame((do.call("rbind", json_source)))
+head(json_data)
+```
+
+### Comparing the Data
+```{r}
+comparedf(json_data, xml_data)
 
 ```
 
-## H
+When comparing the dataframes, we see the variable names and values are the same between JSON and XML,  Due to the way we named them 
+
+HTML variable names are different because we used case titles for the columns 
+```{r}
+comparedf(html_data, json_data)
+```
+
