@@ -1,5 +1,4 @@
-{ 
-    "books": [
+[
     {
        "title": "The Fellowship of the Ring",
        "author": "J.R.R. Tolkien",
@@ -25,4 +24,3 @@
        "publication_date": "09/01/1986"
     }
  ]
-}
