@@ -437,17 +437,94 @@ head(json_data)</code></pre>
 ## 0 variables compared have non-identical attributes.</code></pre>
 <p>When comparing the dataframes, we see the variable names and values are the same between JSON and XML, Due to the way we named them</p>
 <p>HTML variable names are different because we used case titles for the columns</p>
-<pre class="r"><code>comparedf(html_data, json_data)</code></pre>
-<pre><code>## Compare Object
+<pre class="r"><code>summary(comparedf(html_data, json_data))</code></pre>
+<pre><code>## 
 ## 
-## Function Call: 
-## comparedf(x = html_data, y = json_data)
+## Table: Summary of data.frames
 ## 
-## Shared: 0 non-by variables and 3 observations.
-## Not shared: 12 variables and 0 observations.
+## version   arg          ncol   nrow
+## --------  ----------  -----  -----
+## x         html_data       6      3
+## y         json_data       6      3
 ## 
-## Differences found in 0/0 variables compared.
-## 0 variables compared have non-identical attributes.</code></pre>
+## 
+## 
+## Table: Summary of overall comparison
+## 
+## statistic                                                      value
+## ------------------------------------------------------------  ------
+## Number of by-variables                                             0
+## Number of non-by variables in common                               0
+## Number of variables compared                                       0
+## Number of variables in x but not y                                 6
+## Number of variables in y but not x                                 6
+## Number of variables compared with some values unequal              0
+## Number of variables compared with all values equal                 0
+## Number of observations in common                                   3
+## Number of observations in x but not y                              0
+## Number of observations in y but not x                              0
+## Number of observations with some compared variables unequal        0
+## Number of observations with all compared variables equal           3
+## Number of values unequal                                           0
+## 
+## 
+## 
+## Table: Variables not shared
+## 
+## version   variable            position  class     
+## --------  -----------------  ---------  ----------
+## x         Title                      1  character 
+## x         Author                     2  character 
+## x         Country                    3  character 
+## x         Genre                      4  character 
+## x         Publisher                  5  character 
+## x         Publication.Date           6  character 
+## y         title                      1  character 
+## y         author                     2  character 
+## y         country                    3  character 
+## y         genre                      4  character 
+## y         publisher                  5  character 
+## y         publication_date           6  character 
+## 
+## 
+## 
+## Table: Other variables not compared
+## 
+## |                                |
+## |:-------------------------------|
+## |No other variables not compared |
+## 
+## 
+## 
+## Table: Observations not shared
+## 
+## |                           |
+## |:--------------------------|
+## |No observations not shared |
+## 
+## 
+## 
+## Table: Differences detected by variable
+## 
+## |                                    |
+## |:-----------------------------------|
+## |No differences detected by variable |
+## 
+## 
+## 
+## Table: Differences detected
+## 
+## |                        |
+## |:-----------------------|
+## |No differences detected |
+## 
+## 
+## 
+## Table: Non-identical attributes
+## 
+## |                            |
+## |:---------------------------|
+## |No non-identical attributes |</code></pre>
 </div>
 </div>
 

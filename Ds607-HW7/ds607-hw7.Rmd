@@ -64,6 +64,6 @@ When comparing the dataframes, we see the variable names and values are the same
 
 HTML variable names are different because we used case titles for the columns 
 ```{r}
-comparedf(html_data, json_data)
+summary(comparedf(html_data, json_data))
 ```
 

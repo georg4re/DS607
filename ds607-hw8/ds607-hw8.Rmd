@@ -1,0 +1,77 @@
+---
+title: "DS607-HW8"
+author: "George Cruz"
+date: "`r Sys.Date()`"
+output: openintro::lab_report
+---
+#Assignment – Web APIs
+
+The task is to choose one of the New York Times APIs, construct an interface in R to read in the JSON data, and
+transform it into an R DataFrame.
+
+### Setting up
+
+I will store the api-key value in an environment variable by using Sys.setenv
+
+```{r load-packages, message=FALSE}
+library(tidyverse)
+library(openintro)
+library(httr)
+library(jsonlite)
+
+#Storing the API Key in an environment file
+api_key <- Sys.getenv("api_key")
+```
+
+### Connecting to the API
+To connect to the API, we append the api-key as a query string value to the API URL.
+
+```{r}
+#To connect to the API, we compose the url
+url <- paste("https://api.nytimes.com/svc/movies/v2/reviews/picks.json?api-key=",
+             api_key, sep="")
+res <- GET(url)
+data <- fromJSON(rawToChar(res$content))
+
+my_data_frame <- data$results
+```
+
+
+### Analyzing the Data
+We begin by taking a look at the data provided by the API:
+
+```{r}
+
+summary(my_data_frame)
+```
+
+
+```{r}
+knitr::kable(head(my_data_frame))
+```
+
+Because we used the Movies API to only get critic's picks, we see the pick column value is always one. 
+
+Let's count the movies by rating: 
+```{r}
+movies_ratings <- my_data_frame %>%
+  count(mpaa_rating) %>%
+  mutate(p = n /sum(n)) 
+
+movies_ratings$mpaa_rating[1] <- "No Rating"
+knitr::kable(movies_ratings)
+```
+
+
+```{r code-chunk-label}
+ggplot(data=my_data_frame, aes(x=mpaa_rating, stat="count")) + 
+ geom_bar()
+```
+
+### Conclusion
+It appears that most of the NY Times Critic's picks are not rated by the MPAA.  Further analysis could be done to try to infer the probability of a movie being picked by a critic based on its description (to try to determine its genre and other descriptive features).
+
+
+
+...
+
