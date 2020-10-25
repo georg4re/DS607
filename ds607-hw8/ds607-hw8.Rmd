@@ -4,7 +4,7 @@ author: "George Cruz"
 date: "`r Sys.Date()`"
 output: openintro::lab_report
 ---
-#Assignment – Web APIs
+# Assignment – Web APIs
 
 The task is to choose one of the New York Times APIs, construct an interface in R to read in the JSON data, and
 transform it into an R DataFrame.
