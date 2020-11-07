@@ -1,0 +1,66 @@
+---
+title: "Recommender Systems"
+author: "George Cruz"
+date: "11/6/2020"
+output:
+  rmarkdown::html_document:
+    theme: journal
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Facebook
+
+Facebook is an American Social media platform which currently has over 2.74 billion monthly active users.  It started as a social network and grew into a conglomerate that offers several social media platforms: Facebook, Instagram, WhatsApp, Messenger, among others.  
+
+### Scenario Analysis
+
+1. **Who are your target users?**
+
+Facebook's target user is everyone that has access to the internet.  The main goal is to allow individuals to connect to the people they love  or to people that share common interests but, in its broader sense to connect individuals and allow them to share information about themselves. 
+
+2. **What are their key goals?**
+
+Facebook users, and social networking users in general, are trying to establish a connection with others, share information with their friends and family, share pictures and media and as such, gain and maintain closer relationships regardless of distance.
+
+3. **How can you help them accomplish those goals?**
+
+Facebook does a great job at allowing people to share with their friends and family by providing:
+
+- A unified and easy to use interface centered on the Timeline. 
+- The Timeline shows the latest posts of people connected to the members.  It's also a place where Facebook will show advertisement (formatted as a post) and suggestions. 
+- Facebook also shows us the Stories panel right on top the Timeline.  The stories are brief videos recorded by your friends (people connected to you on the site).
+- By allowing quick access to your friends' posts and quick access to their stories and the groups you're connected to, Facebook makes it easy for us to connect with our friends, watch their stories, comment on their posts and share ideas and experiences with them. 
+
+### How does their Recommender System work
+
+Facebook has been heavily criticized for its role in spreading misinformation and fake news.  Due to this criticism, they decided to partially disclose how their recommender system works. [This Facebook Help Page](https://www.facebook.com/help/1257205004624246) lists several key elements of Facebook Recommender's System: 
+
+1. Facebook will not recommend these five categories of content that is otherwise allowed in their pages: 
+  - Content that impedes Facebook's ability to foster a safe community. 
+  - Sensitive or low quality content about health or finance.
+  - Content that most users dislike.
+  - Content associated with low quality publishing
+  - False or misleading content. 
+  
+2. Facebook will *try* to not recommend accounts or groups that recently violated Facebook's standards,  or have spread misinformation or constantly posted content that would not be recommended by falling in one of the 5 categories listed above. 
+
+3. Facebook will follow a strategy they have called: **"remove, reduce and inform."**:
+  - Remove content that violates their community standards, 
+  - Reduce the spread of problematic content, 
+  - Inform people with additional information so they choose what to click, read or share. 
+  
+Facebook will make recommendations in several places: **Pages You May Like**, posts **Suggested for you**, **People you may know** and **Groups you should Join**.
+
+To make these recommendations Facebook evaluates the people and groups you connect and interact with, the frequency of the interactions and also how these people interact with each other.  By establishing connections between people, location, activities and comments and cross-referencing these they are able to infer other connections and **recommend** Groups, Pages and People with which their algorithm calculates you are compatible or connected. 
+
+Because people share information about their activities, tastes and preferences; Facebook is able to gather and match a wealth of information about a particular member and suggest people compatible with those activities and preferences. 
+
+In [this article](https://www.dailymail.co.uk/sciencetech/article-4832390/Creepy-Facebook-feature-reconnects-long-lost-relatives.html), Facebook was able to connect a Great-Aunt with her Great-niece even though they did not know of the other's existence.  This lead people to believe that their algorithm also uses facial recognition as part of their recommender's system. 
+
+### Recommendations 
+
+Facebook's recommender system is very good at what it does.  One way to improve it would be to connect it to all aspects of the site especially **Search** and **Ads**.  This will ensure that the limitations they claim to impose on their recommendations trickle down also to searching the site or the ads the users are exposed to. 
+
